@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade Calculator</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; font-family: Arial, Helvetica, sans-serif; }
+  body {
+    background: #111;
+    color: #111;
+    overflow-x: hidden;
+  }
+
+  /* Background layer */
+  #background {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: background 0.25s ease;
+  }
+  #shade {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: rgba(0,0,0,.30);
+    pointer-events: none;
+  }
+
+  .page {
+    min-height: 100vh;
+    padding: 22px 14px 35px;
+  }
+
+  .topbar {
+    width: min(900px, 100%);
+    margin: 0 auto 14px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  button, input { font: inherit; }
+
+  .settings-btn {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,.92);
+    cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  }
+
+  .card {
+    width: min(900px, 100%);
+    margin: 0 auto;
+    background: rgba(255,255,255,.94);
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  }
+
+  h1 {
+    margin: 0 0 6px;
+    font-size: clamp(28px, 5vw, 42px);
+  }
+
+  .subtitle {
+    margin: 0 0 22px;
+    color: #555;
+  }
+
+  .calculator {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 12px;
+    align-items: end;
+  }
+
+  label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 7px;
+  }
+
+  #percentage {
+    width: 100%;
+    padding: 13px 14px;
+    border: 2px solid #bbb;
+    border-radius: 10px;
+    font-size: 20px;
+    outline: none;
+  }
+
+  #percentage:focus { border-color: #333; }
+
+  .calculate {
+    padding: 14px 22px;
+    border: 0;
+    border-radius: 10px;
+    background: #111;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .result {
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 20px;
+    display: none;
+  }
+
+  .grade {
+    font-size: clamp(52px, 12vw, 88px);
+    font-weight: 900;
+    line-height: .95;
+  }
+
+  .message {
+    margin-top: 8px;
+    color: #555;
+    font-size: 16px;
+  }
+
+  .thresholds {
+    margin-top: 26px;
+    border-top: 1px solid #ddd;
+    padding-top: 18px;
+  }
+
+  .thresholds h2 {
+    font-size: 18px;
+    margin: 0 0 12px;
+  }
+
+  .threshold-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .threshold {
+    background: #f2f2f2;
+    border-radius: 9px;
+    padding: 10px;
+    text-align: center;
+  }
+
+  .threshold strong { display: block; font-size: 20px; }
+  .threshold span { color: #555; font-size: 13px; }
+
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background: rgba(0,0,0,.55);
+    padding: 18px;
+    overflow-y: auto;
+  }
+
+  .modal-box {
+    width: min(560px, 100%);
+    margin: 40px auto;
+    background: white;
+    border-radius: 15px;
+    padding: 22px;
+  }
+
+  .modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .modal-head h2 { margin: 0; }
+
+  .close {
+    border: 0;
+    background: #eee;
+    border-radius: 8px;
+    padding: 7px 11px;
+    cursor: pointer;
+    font-size: 18px;
+  }
+
+  .setting-section {
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid #ddd;
+  }
+
+  .setting-section h3 { margin: 0 0 12px; }
+
+  .bg-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px;
+  }
+
+  .bg-choice {
+    border: 2px solid #ddd;
+    background: #fafafa;
+    border-radius: 9px;
+    padding: 12px;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .bg-choice:hover { border-color: #777; }
+
+  .file-input {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .small {
+    color: #666;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .reset {
+    margin-top: 10px;
+    border: 1px solid #bbb;
+    background: white;
+    border-radius: 8px;
+    padding: 9px 12px;
+    cursor: pointer;
+  }
+
+  @media (max-width: 600px) {
+    .page { padding: 12px 9px 25px; }
+    .card { padding: 18px; border-radius: 12px; }
+    .calculator { grid-template-columns: 1fr; }
+    .calculate { width: 100%; }
+    .threshold-grid { grid-template-columns: repeat(2, 1fr); }
+    .bg-buttons { grid-template-columns: 1fr; }
+    .modal-box { margin: 10px auto; }
+  }
+</style>
+</head>
+
+<body>
+<div id="background"></div>
+<div id="shade"></div>
+
+<div class="page">
+  <div class="topbar">
+    <button class="settings-btn" id="settingsOpen">⚙️ Settings</button>
+  </div>
+
+  <main class="card">
+    <h1>Grade Calculator</h1>
+    <p class="subtitle">Enter a percentage to calculate the grade.</p>
+
+    <div class="calculator">
+      <div>
+        <label for="percentage">Percentage</label>
+        <input id="percentage" type="number" min="0" max="100" step="0.01"
+               placeholder="e.g. 78.5" inputmode="decimal">
+      </div>
+      <button class="calculate" id="calculate">Calculate Grade</button>
+    </div>
+
+    <section class="result" id="result">
+      <div class="grade" id="grade">—</div>
+      <div class="message" id="message"></div>
+    </section>
+
+    <section class="thresholds">
+      <h2>Current grading scale</h2>
+      <div class="threshold-grid">
+        <div class="threshold"><strong>A</strong><span>80–100%</span></div>
+        <div class="threshold"><strong>B</strong><span>70–79%</span></div>
+        <div class="threshold"><strong>C</strong><span>60–69%</span></div>
+        <div class="threshold"><strong>D</strong><span>50–59%</span></div>
+        <div class="threshold"><strong>F</strong><span>Below 50%</span></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal" id="settingsModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>⚙️ Settings</h2>
+      <button class="close" id="settingsClose">✕</button>
+    </div>
+
+    <div class="setting-section">
+      <h3>Background</h3>
+      <div class="bg-buttons">
+        <button class="bg-choice" data-bg="forest">🦖 Dinosaur Forest</button>
+        <button class="bg-choice" data-bg="desert">🦕 Dinosaur Desert</button>
+        <button class="bg-choice" data-bg="plain">⬛ Plain Dark</button>
+        <button class="bg-choice" data-bg="custom">🖼️ Use Uploaded Image</button>
+      </div>
+
+      <label for="customImage" style="margin-top:16px;">Upload your own background</label>
+      <input class="file-input" id="customImage" type="file" accept="image/*">
+      <p class="small">
+        The selected background is saved in this browser on this device.
+        It does not change the background for other people's devices.
+      </p>
+      <button class="reset" id="resetBackground">Reset background</button>
+    </div>
+
+    <div class="setting-section">
+      <h3>About</h3>
+      <p class="small">
+        This is a simple browser-only version. No account, login, database,
+        or server is required.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  /*
+    GRADING RULES
+    Change these numbers later if your actual grading scheme is different.
+  */
+  function getGrade(percent) {
+    if (percent >= 80) return "A";
+    if (percent >= 70) return "B";
+    if (percent >= 60) return "C";
+    if (percent >= 50) return "D";
+    return "F";
+  }
+
+  const percentage = document.getElementById("percentage");
+  const calculate = document.getElementById("calculate");
+  const result = document.getElementById("result");
+  const grade = document.getElementById("grade");
+  const message = document.getElementById("message");
+
+  function calculateGrade() {
+    const value = Number(percentage.value);
+
+    if (percentage.value === "" || !Number.isFinite(value) || value < 0 || value > 100) {
+      result.style.display = "block";
+      grade.textContent = "!";
+      message.textContent = "Please enter a percentage from 0 to 100.";
+      return;
+    }
+
+    const g = getGrade(value);
+    grade.textContent = g;
+    message.textContent = value + "% → Grade " + g;
+    result.style.display = "block";
+  }
+
+  calculate.addEventListener("click", calculateGrade);
+  percentage.addEventListener("keydown", e => {
+    if (e.key === "Enter") calculateGrade();
+  });
+
+  // Settings
+  const modal = document.getElementById("settingsModal");
+  const background = document.getElementById("background");
+  const settingsOpen = document.getElementById("settingsOpen");
+  const settingsClose = document.getElementById("settingsClose");
+  const customImage = document.getElementById("customImage");
+
+  // Simple built-in backgrounds using gradients/patterns so the file works
+  // without depending on an external video host.
+  const backgrounds = {
+    forest: "radial-gradient(circle at 75% 20%, rgba(90,120,70,.8), transparent 30%), linear-gradient(135deg, #243b22, #101710 55%, #31452a)",
+    desert: "radial-gradient(circle at 70% 20%, rgba(225,190,110,.8), transparent 25%), linear-gradient(135deg, #80613d, #d1a66b 55%, #59422d)",
+    plain: "#111"
+  };
+
+  function setBackground(name) {
+    if (name === "custom") {
+      const custom = localStorage.getItem("customBackground");
+      if (custom) {
+        background.style.background = "url('" + custom + "') center/cover no-repeat";
+        localStorage.setItem("selectedBackground", "custom");
+        return;
+      }
+      name = "forest";
+    }
+
+    background.style.background = backgrounds[name] || backgrounds.forest;
+    localStorage.setItem("selectedBackground", name);
+  }
+
+  function loadBackground() {
+    const saved = localStorage.getItem("selectedBackground") || "forest";
+    setBackground(saved);
+  }
+
+  settingsOpen.addEventListener("click", () => {
+    modal.style.display = "block";
+  });
+
+  settingsClose.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  modal.addEventListener("click", e => {
+    if (e.target === modal) modal.style.display = "none";
+  });
+
+  document.querySelectorAll(".bg-choice").forEach(button => {
+    button.addEventListener("click", () => {
+      setBackground(button.dataset.bg);
+    });
+  });
+
+  customImage.addEventListener("change", () => {
+    const file = customImage.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        localStorage.setItem("customBackground", e.target.result);
+        setBackground("custom");
+      } catch {
+        alert("That image is too large for this browser's storage. Try a smaller image.");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById("resetBackground").addEventListener("click", () => {
+    localStorage.removeItem("customBackground");
+    localStorage.removeItem("selectedBackground");
+    setBackground("forest");
+    customImage.value = "";
+  });
+
+  loadBackground();
+</script>
+</body>
+</html>
